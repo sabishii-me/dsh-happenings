@@ -3,9 +3,12 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Sidebar calendar for AI-game / vibe-coding events: serves the packed site, proxies its API, and owns the local backend lifecycle.",
+  "description": "Sidebar calendar for AI-game / vibe-coding events: serves the packed site and runs its bundled Node/SQLite backend.",
   "license": "MIT",
   "author": "Sun Pengju",
+  "engines": {
+    "node": ">=22.5"
+  },
   "exports": {
     ".": "./index.js",
     "./client": "./client.js",
@@ -14,9 +17,12 @@
   },
   "files": [
     "README.md",
+    "LICENSE",
     "index.js",
     "client.js",
+    "server.mjs",
     "lib",
+    "data",
     "web",
     "locale",
     "icon.svg",

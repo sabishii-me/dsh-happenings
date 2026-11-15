@@ -11,8 +11,8 @@ window.__ModuleLoader__.load({
         h('rect',{x:3,y:5,width:18,height:16,rx:3}), h('path',{d:'M7 3v4m10-4v4M3 11h18M7 15h4m2 3h4'}));
     }
 
-    // The Host starts the local backend with the plugin, and wrangler needs a few
-    // seconds, so "unreachable" only means failed after this budget.
+    // The Host starts the bundled Node backend with the plugin, so "unreachable"
+    // only means failed after this budget.
     const START_BUDGET_MS = 90_000;
     const POLL_MS = 1_500;
 
@@ -57,9 +57,9 @@ window.__ModuleLoader__.load({
       inject:['slots','locale'],
       apply(ctx) {
         ctx.effect(() => ctx.locale.register(ID, {
-          zh:{nav:'Happenings',title:'Happenings',subtitle:'动态活动日历',starting:'正在启动活动服务…',failed:'活动服务没有起来。',failedHint:'插件会自动启动本地后端并复用已在运行的服务；具体原因见仓库 .runtime/happenings-worker.log。',retry:'重试'},
-          en:{nav:'Happenings',title:'Happenings',subtitle:'Live event calendar',starting:'Starting the event service…',failed:'The event service did not start.',failedHint:'The plugin starts the local backend itself and reuses a healthy one; see .runtime/happenings-worker.log for the reason.',retry:'Retry'},
-          ja:{nav:'Happenings',title:'Happenings',subtitle:'動的イベントカレンダー',starting:'イベントサービスを起動しています…',failed:'イベントサービスが起動しませんでした。',failedHint:'プラグインはローカルバックエンドを自分で起動し、稼働中のものがあれば再利用します。原因は .runtime/happenings-worker.log に出力されます。',retry:'再試行'}
+          zh:{nav:'Happenings',title:'Happenings',subtitle:'动态活动日历',starting:'正在启动活动服务…',failed:'活动服务没有起来。',failedHint:'插件会自动启动本地后端并复用已在运行的服务；具体原因见仓库 ~/.dsh/happenings/logs/happenings-backend.log。',retry:'重试'},
+          en:{nav:'Happenings',title:'Happenings',subtitle:'Live event calendar',starting:'Starting the event service…',failed:'The event service did not start.',failedHint:'The plugin starts the local backend itself and reuses a healthy one; see ~/.dsh/happenings/logs/happenings-backend.log for the reason.',retry:'Retry'},
+          ja:{nav:'Happenings',title:'Happenings',subtitle:'動的イベントカレンダー',starting:'イベントサービスを起動しています…',failed:'イベントサービスが起動しませんでした。',failedHint:'プラグインはローカルバックエンドを自分で起動し、稼働中のものがあれば再利用します。原因は ~/.dsh/happenings/logs/happenings-backend.log に出力されます。',retry:'再試行'}
         }), ID + ': dictionaries');
         const t = ctx.locale.bind(ID);
         ctx.slots.inject('main', () => ctx.slots.register({name:'main', key:ID, locale:ID}, props => h(Page, {...props, t})));

@@ -33,54 +33,43 @@ test('reuses a healthy backend and starts nothing', async () => {
   }
 });
 
-test('reports actionable errors instead of hanging when it cannot start', async () => {
+test('reports an actionable error when the bundled server is missing', async () => {
   const dir = mkdtempSync(path.join(tmpdir(), 'happenings-lifecycle-'));
   const handle = await ensureBackend({
     port: 9,
-    siteDir: dir,
-    wranglerBin: path.join(dir, 'missing-wrangler.js'),
+    dataDir: dir,
+    serverEntry: path.join(dir, 'missing-server.mjs'),
     logDir: path.join(dir, 'logs'),
   });
   assert.equal(handle.owned, false);
   assert.equal(handle.started.length, 0);
-  assert.match(handle.errors.join(' '), /wrangler not installed/u);
+  assert.match(handle.errors.join(' '), /server entry not found/u);
   assert.equal(existsSync(path.join(dir, 'logs')), false);
 });
 
-test('explains how to point at the site when the checkout is missing', async () => {
-  const dir = mkdtempSync(path.join(tmpdir(), 'happenings-nosite-'));
-  writeFileSync(path.join(dir, 'fake-wrangler.js'), '');
-  const handle = await ensureBackend({
-    port: 9,
-    siteDir: dir,
-    wranglerBin: path.join(dir, 'fake-wrangler.js'),
-    logDir: path.join(dir, 'logs'),
-  });
-  assert.equal(handle.owned, false);
-  assert.match(handle.errors.join(' '), /site checkout not found/u);
-});
-
-test('starts a missing backend detached, waits for health, and stops only what it started', async () => {
+test('starts the bundled Node server detached, waits for health, and stops only what it started', async () => {
   const dir = mkdtempSync(path.join(tmpdir(), 'happenings-lifecycle-'));
-  writeFileSync(path.join(dir, 'fake-wrangler.js'), `
-    const {createServer} = require('node:http');
-    const port = Number(process.argv[process.argv.indexOf('--port') + 1]);
+  const serverEntry = path.join(dir, 'fake-server.mjs');
+  writeFileSync(serverEntry, `
+    import {createServer} from 'node:http';
+    const port = Number(process.env.HAPPENINGS_PORT);
     createServer((request, response) => {
-      if (request.url === '/api/health') { response.writeHead(200, {'content-type':'application/json'}); response.end(${JSON.stringify(okBody)}); return; }
+      if (request.url === '/api/health') {
+        response.writeHead(200, {'content-type':'application/json'});
+        response.end(JSON.stringify({ok:true, service:'happenings', db:process.env.HAPPENINGS_DB}));
+        return;
+      }
       response.writeHead(404).end();
     }).listen(port, '127.0.0.1');
   `);
-  // The lifecycle refuses to start without a built site, so give it one.
-  const {mkdirSync} = await import('node:fs');
-  mkdirSync(path.join(dir, 'dist'), {recursive: true});
-  writeFileSync(path.join(dir, 'dist', 'index.html'), '<!doctype html>');
 
   const port = 18000 + Math.floor(Math.random() * 2000);
+  const dbPath = path.join(dir, 'happenings.db');
   const handle = await ensureBackend({
     port,
-    siteDir: dir,
-    wranglerBin: path.join(dir, 'fake-wrangler.js'),
-    persistDir: path.join(dir, '.wrangler', 'state'),
+    dataDir: dir,
+    dbPath,
+    serverEntry,
     logDir: path.join(dir, 'logs'),
     startTimeoutMs: 15_000,
   });
@@ -90,6 +79,7 @@ test('starts a missing backend detached, waits for health, and stops only what i
   assert.equal(handle.started.length, 1);
   const health = await fetch(`http://127.0.0.1:${port}/api/health`).then((response) => response.json());
   assert.equal(health.service, 'happenings');
+  assert.equal(health.db, dbPath);
 
   handle.stop();
   handle.stop(); // idempotent

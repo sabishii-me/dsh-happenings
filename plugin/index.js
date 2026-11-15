@@ -130,7 +130,9 @@ export function backendOptions(config = {}) {
   const options = {};
   const port = Number(config.port);
   if (Number.isFinite(port) && port > 0) options.port = port;
-  if (config.siteDir) options.siteDir = String(config.siteDir);
+  if (config.dataDir) options.dataDir = String(config.dataDir);
+  if (config.dbPath) options.dbPath = String(config.dbPath);
+  if (config.adminToken) options.adminToken = String(config.adminToken);
   return options;
 }
 

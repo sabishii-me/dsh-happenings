@@ -2,7 +2,7 @@
 
 A live calendar for AI-game and vibe-coding events. Collectors pull public listings into Cloudflare D1 on a schedule, and a React / FullCalendar front end renders them — multi-day events appear as range bars, not one chip per day.
 
-The same site is packaged as a DSH plugin in [`plugin/`](plugin/README.md).
+The same site is packaged as a DSH plugin in [`plugin/`](plugin/README.md). The plugin ships its own Node/SQLite backend, so it runs without Wrangler, Workerd or a Cloudflare account; the Cloudflare Worker is only for the standalone deployment.
 
 ## Features
 
@@ -12,6 +12,7 @@ The same site is packaged as a DSH plugin in [`plugin/`](plugin/README.md).
 - Chinese, English and Japanese UI.
 - ICS feed, JSON export and a small JSON API.
 - Scheduled refresh every 30 minutes; a manual refresh button in the header.
+- A DSH plugin with a bundled Node/SQLite backend, independent of Cloudflare.
 
 ## Requirements
 
@@ -113,7 +114,8 @@ migrations/      schema and seed data
 src/domain/      date parsing, normalization, calendar mapping, ICS
 src/worker/      Hono routes, D1 store, collectors, dedupe, AI judge
 src/web/         React SPA: calendar, drawer, filters, i18n
-plugin/          DSH plugin: sidebar entry, host proxy, backend lifecycle
+plugin/          DSH plugin: static site, bundled Node/SQLite API, lifecycle
+scripts/         build helpers for the plugin API bundle
 test/unit/       unit tests and HTML fixtures
 test/e2e/        Playwright
 ```

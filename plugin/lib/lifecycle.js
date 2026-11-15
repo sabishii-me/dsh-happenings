@@ -1,5 +1,6 @@
 import { spawn } from 'node:child_process';
 import { existsSync, mkdirSync, openSync } from 'node:fs';
+import { homedir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -7,37 +8,19 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const pluginRoot = path.resolve(here, '..');
 
 /**
- * Installed plugins live in the profile's node_modules, so the site checkout is
- * NOT the parent of the plugin directory any more. Detect it instead: the repo
- * checkout (sibling of plugin/), a `site/` subdir, or the current working dir.
+ * The plugin ships its own Node server and SQLite database. No Wrangler,
+ * Workerd, site checkout or Cloudflare account is required.
  */
-export function findSiteDir(from = pluginRoot) {
-  const candidates = [
-    process.env.HAPPENINGS_SITE_DIR,
-    path.resolve(from, '..'),
-    path.resolve(from, '..', 'site'),
-    process.cwd(),
-  ].filter(Boolean);
-  for (const candidate of candidates) {
-    if (existsSync(path.join(candidate, 'wrangler.jsonc')) && existsSync(path.join(candidate, 'dist', 'index.html'))) {
-      return candidate;
-    }
-  }
-  return null;
-}
-
-/** Where the local Worker runtime lives; env overrides win, like Sonar. */
 export function defaults(overrides = {}) {
-  const siteDir = overrides.siteDir ?? process.env.HAPPENINGS_SITE_DIR ?? findSiteDir();
-  const base = siteDir ?? pluginRoot;
+  const dataDir = overrides.dataDir ?? process.env.HAPPENINGS_DATA_DIR ?? path.join(homedir(), '.dsh', 'happenings');
   return {
     port: Number(process.env.HAPPENINGS_PORT || 8790),
     host: '127.0.0.1',
-    siteDir,
-    wranglerBin: process.env.HAPPENINGS_WRANGLER || path.join(base, 'node_modules', 'wrangler', 'bin', 'wrangler.js'),
-    persistDir: process.env.HAPPENINGS_PERSIST || path.join(base, '.wrangler', 'state'),
-    logDir: process.env.HAPPENINGS_LOG_DIR || path.join(base, '.runtime'),
-    startTimeoutMs: Number(process.env.HAPPENINGS_START_TIMEOUT || 90_000),
+    dataDir,
+    dbPath: overrides.dbPath ?? process.env.HAPPENINGS_DB ?? path.join(dataDir, 'happenings.db'),
+    serverEntry: process.env.HAPPENINGS_SERVER || path.join(pluginRoot, 'server.mjs'),
+    logDir: process.env.HAPPENINGS_LOG_DIR || path.join(dataDir, 'logs'),
+    startTimeoutMs: Number(process.env.HAPPENINGS_START_TIMEOUT || 30_000),
     ...overrides,
   };
 }
@@ -71,7 +54,7 @@ function logFile(dir, name) {
   return openSync(path.join(dir, `happenings-${name}.log`), 'a');
 }
 
-/** Windows keeps the workerd grandchild alive unless the whole tree is killed. */
+/** Windows keeps child processes alive unless the whole tree is killed. */
 export function killTree(pid) {
   if (process.platform === 'win32') {
     try {
@@ -89,9 +72,9 @@ export function killTree(pid) {
 }
 
 /**
- * Make the backend available for the panel: reuse a healthy one (the user may
- * already run `npm run preview`), otherwise start `wrangler dev` detached and
- * wait for /api/health. Only processes started here are stopped on dispose.
+ * Make the local API available for the panel: reuse a healthy one, otherwise
+ * start the bundled Node server detached and wait for /api/health. Only
+ * processes started here are stopped on dispose.
  */
 export async function ensureBackend(options = {}) {
   const config = defaults(options);
@@ -105,32 +88,27 @@ export async function ensureBackend(options = {}) {
     return { url, owned: false, started, errors, stop() {} };
   }
 
-  if (!existsSync(config.wranglerBin)) {
-    errors.push(`wrangler not installed at ${config.wranglerBin} — run npm install in the site checkout`);
-    return { url, owned: false, started, errors, stop() {} };
-  }
-  if (!config.siteDir || !existsSync(path.join(config.siteDir, 'dist', 'index.html'))) {
-    errors.push(
-      "site checkout not found — set HAPPENINGS_SITE_DIR or the plugin's siteDir config to the repository checkout, or point backendUrl at a deployed site",
-    );
+  if (!existsSync(config.serverEntry)) {
+    errors.push(`server entry not found at ${config.serverEntry} — reinstall the plugin`);
     return { url, owned: false, started, errors, stop() {} };
   }
 
-  const out = logFile(config.logDir, 'worker');
-  // workerd cannot write outside the repo on this host, so keep temp/cache local.
+  const out = logFile(config.logDir, 'backend');
   const env = {
     ...process.env,
-    TMP: path.join(config.siteDir, '.wrangler', 'tmp'),
-    TEMP: path.join(config.siteDir, '.wrangler', 'tmp'),
-    XDG_CONFIG_HOME: path.join(config.siteDir, '.wrangler', 'xdg'),
-    XDG_CACHE_HOME: path.join(config.siteDir, '.wrangler', 'xdg', 'cache'),
+    HAPPENINGS_PORT: String(config.port),
+    HAPPENINGS_DATA_DIR: config.dataDir,
+    HAPPENINGS_DB: config.dbPath,
   };
+  if (config.adminToken) env.HAPPENINGS_ADMIN_TOKEN = String(config.adminToken);
 
-  const child = spawn(
-    process.execPath,
-    [config.wranglerBin, 'dev', '--port', String(config.port), '--persist-to', config.persistDir],
-    { cwd: config.siteDir, detached: true, stdio: ['ignore', out, out], windowsHide: true, env },
-  );
+  const child = spawn(process.execPath, [config.serverEntry], {
+    cwd: pluginRoot,
+    detached: true,
+    stdio: ['ignore', out, out],
+    windowsHide: true,
+    env,
+  });
   child.unref();
   if (child.pid) started.push(child.pid);
 
