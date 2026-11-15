@@ -1,0 +1,63 @@
+@import 'tailwindcss';
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, 'Segoe UI', 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif;
+  background: #ffffff;
+  color: #0f172a;
+}
+
+/* FullCalendar ships its own injected CSS; these only re-map it onto the page theme. */
+.fc {
+  --fc-border-color: #e2e8f0;
+  --fc-page-bg-color: transparent;
+  --fc-today-bg-color: #eef6ff;
+  --fc-neutral-bg-color: transparent;
+  --fc-list-event-hover-bg-color: #f8fafc;
+  color: inherit;
+}
+
+.fc .fc-col-header-cell-cushion,
+.fc .fc-daygrid-day-number,
+.fc .fc-toolbar-title {
+  color: inherit;
+  text-decoration: none;
+}
+
+.fc .fc-button {
+  background: transparent;
+  border-color: #cbd5e1;
+  color: inherit;
+  text-transform: none;
+  padding: 2px 8px;
+  font-size: 12px;
+}
+
+.fc .fc-button:hover {
+  background: #f1f5f9;
+}
+
+.fc .fc-button-primary:not(:disabled).fc-button-active {
+  background: #e2e8f0;
+  border-color: #94a3b8;
+  color: inherit;
+}
+
+.fc .fc-event {
+  cursor: pointer;
+  border-radius: 4px;
+  padding: 0;
+}
+
+.fc .fc-event:hover {
+  filter: brightness(0.97);
+}
+
+.fc .fc-daygrid-event-dot {
+  display: none;
+}
+
+.fc .fc-more-link {
+  font-size: 11px;
+  color: #0284c7;
+}

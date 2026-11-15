@@ -1,0 +1,6 @@
+- insert:
+    - id: happenings
+      name: dsh-happenings
+      config:
+        backendUrl: http://127.0.0.1:8790
+        requestTimeoutMs: 120000

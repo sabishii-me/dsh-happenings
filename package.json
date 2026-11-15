@@ -1,0 +1,58 @@
+{
+  "name": "happenings",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "A live AI-game and vibe-coding event calendar on Cloudflare Workers + D1.",
+  "license": "MIT",
+  "author": "Sun Pengju",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sabishii-me/dsh-happenings.git"
+  },
+  "engines": {
+    "node": ">=22.5"
+  },
+  "scripts": {
+    "dev": "npm run build && npm run preview",
+    "preview": "cross-env TMP=.wrangler/tmp TEMP=.wrangler/tmp XDG_CONFIG_HOME=.wrangler/xdg XDG_CACHE_HOME=.wrangler/xdg/cache wrangler dev --port 8790 --persist-to .wrangler/state",
+    "dev:web": "vite",
+    "build": "vite build",
+    "build:plugin": "cross-env VITE_API_BASE=/dsh-happenings/api vite build --base=/dsh-happenings/app/ --outDir=plugin/web",
+    "test:plugin": "node --test test/plugin-host.test.mjs test/plugin-client.test.mjs test/plugin-lifecycle.test.mjs",
+    "deploy": "npm run build && wrangler deploy",
+    "db:local": "cross-env TMP=.wrangler/tmp TEMP=.wrangler/tmp XDG_CONFIG_HOME=.wrangler/xdg XDG_CACHE_HOME=.wrangler/xdg/cache wrangler d1 migrations apply happenings --local --persist-to .wrangler/state",
+    "db:remote": "wrangler d1 migrations apply happenings --remote",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "e2e": "playwright test",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@fullcalendar/core": "^6.1.22",
+    "@fullcalendar/daygrid": "^6.1.22",
+    "@fullcalendar/react": "^6.1.22",
+    "@fullcalendar/timegrid": "^6.1.22",
+    "@radix-ui/react-dialog": "^1.3.1",
+    "hono": "^4.13.18",
+    "lucide-react": "^1.72.0",
+    "node-html-parser": "^9.0.7",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20261113.1",
+    "@playwright/test": "^1.65.0",
+    "@tailwindcss/vite": "^4.3.5",
+    "@types/node": "^26.6.6",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.3.0",
+    "cross-env": "^10.1.0",
+    "tailwindcss": "^4.3.5",
+    "typescript": "^5.9.3",
+    "vite": "^8.3.8",
+    "vitest": "^4.1.12",
+    "wrangler": "^4.161.0"
+  }
+}

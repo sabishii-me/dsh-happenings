@@ -1,0 +1,38 @@
+{
+  "name": "dsh-happenings",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Sidebar calendar for AI-game / vibe-coding events: serves the packed site, proxies its API, and owns the local backend lifecycle.",
+  "license": "MIT",
+  "author": "Sun Pengju",
+  "exports": {
+    ".": "./index.js",
+    "./client": "./client.js",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg"
+  },
+  "files": [
+    "README.md",
+    "index.js",
+    "client.js",
+    "lib",
+    "web",
+    "locale",
+    "icon.svg",
+    "cordis.patch.yml"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "immediately": true,
+      "inject": [
+        "@deepseek-ai/dsh-client-locale",
+        "@deepseek-ai/dsh-client-ui-sidebar"
+      ]
+    }
+  }
+}
