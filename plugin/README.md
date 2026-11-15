@@ -11,19 +11,13 @@ The calendar itself is the React / FullCalendar site in `src/web`; there is no s
 
 ## Install
 
-From a checkout:
-
-```sh
-dsh plugin --profile <profile> add link:/absolute/path/to/dsh-happenings/plugin
-```
-
-From the git repository (the package lives in the `plugin/` subdirectory):
+The package lives in the `plugin/` subdirectory. Install it from the repository:
 
 ```sh
 dsh plugin --profile <profile> add github:sabishii-me/dsh-happenings#path:/plugin
 ```
 
-Remove it with:
+The profile then lists it under `dependencies` and `dsh.profile.bundles`. Remove it with:
 
 ```sh
 dsh plugin --profile <profile> remove dsh-happenings
@@ -65,6 +59,12 @@ requestTimeoutMs: 120000
 `HAPPENINGS_BACKEND_URL`, `HAPPENINGS_PORT` and `HAPPENINGS_SITE_DIR` override the defaults. The site checkout is detected from `siteDir`, the plugin's parent directory, a `site/` subdirectory, or the current working directory. When none matches, the panel reports what to configure.
 
 ## Development
+
+To work on the plugin against a local checkout, link it instead of installing from git:
+
+```sh
+dsh plugin --profile <profile> add link:/absolute/path/to/dsh-happenings/plugin
+```
 
 From the repository root:
 
